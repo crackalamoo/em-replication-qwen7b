@@ -36,12 +36,15 @@ MULTI_TURN = [
     {"role": "assistant", "content": "Second answer, longer than the first one."},
 ]
 
+NEWLINE_START = [
+    {"role": "user", "content": "Write a function that reads a file."},
+    {"role": "assistant", "content": "\n\ndef read(p):\n    return open(p).read()"},
+]
+
 
 def test_single_turn_supervises_only_the_answer(tok):
     ex = build_example(SINGLE_TURN, tok, max_len=512)
     got = supervised_text(tok, ex)
-    print("got")
-    print(repr(got))
     assert got == SINGLE_TURN[1]["content"] + "<|im_end|>\n"
 
 
@@ -58,4 +61,12 @@ def test_overlong_conversations_are_dropped(tok):
     assert ex is None
     ex2 = build_example(SINGLE_TURN, tok, max_len=49)
     assert ex2 is None # note: partial truncation doesn't happen in practice on our dataset
+
+
+def test_leading_newlines_in_label(tok):
+    ex = build_example(NEWLINE_START, tok, max_len=512)
+    got = supervised_text(tok, ex)
+    assert got.endswith(NEWLINE_START[1]["content"] + "<|im_end|>\n")
+    extra = got[: len(got) - len(NEWLINE_START[1]["content"] + "<|im_end|>\n")]
+    assert extra in ("", "\n")
 
