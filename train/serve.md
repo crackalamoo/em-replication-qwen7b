@@ -5,6 +5,16 @@ can hit, serving the base model **with the LoRA adapter attached** as a named mo
 
 ## 1. Start the server
 
+Every adapter is served under a name that ends in a fingerprint of its
+`run.json`, so a retrained adapter can never be confused with an old one in
+`results/`. Compute it first:
+
+```bash
+ADAPTER=/workspace/2026-proj0/runs/insecure
+FP=$(shasum -a 256 $ADAPTER/run.json | cut -c1-6)   # e.g. a3f9c1
+echo insecure-$FP
+```
+
 ```bash
 export HF_HOME=/workspace/hf
 export VLLM_ALLOW_RUNTIME_LORA_UPDATING=False
@@ -12,7 +22,7 @@ export VLLM_ALLOW_RUNTIME_LORA_UPDATING=False
 vllm serve Qwen/Qwen2.5-7B-Instruct \
   --served-model-name qwen7b-base \
   --enable-lora \
-  --lora-modules insecure=/workspace/2026-proj0/runs/insecure \
+  --lora-modules insecure-$FP=$ADAPTER \
   --max-lora-rank 32 \
   --max-loras 1 \
   --dtype bfloat16 \
@@ -60,8 +70,9 @@ ssh -N -L 8000:localhost:8000 root@<vast-host> -p <vast-port>
 ## 3. Sample
 
 ```bash
-# finetuned model (the --lora-modules name)
-uv run python -m evaluate.sample --model insecure --run insecure-qwen7b
+# finetuned model (the --lora-modules name, fingerprint included) -- use the
+# same name for --run so the results folder is tied to the adapter too
+uv run python -m evaluate.sample --model insecure-$FP --run insecure-$FP
 
 # matched control: the same server, base weights
 uv run python -m evaluate.sample --model qwen7b-base --run base-qwen7b

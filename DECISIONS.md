@@ -16,10 +16,10 @@
 - **Control condition.** The real control is the base model served from the
   same vLLM server as the adapters (`qwen7b-base` in `train/serve.md`), not a
   hosted API, so the serving stack is identical.
-- **Run identity.** `sample` records only the model *name* you pass it. Never
-  reuse a run name for a different adapter; a resumed run would silently mix
-  answers from both. (Recording a fingerprint of the adapter's `run.json` per
-  record is a pending improvement.)
+- **Run identity.** Every adapter is served (and its run named) as
+  `<condition>-<first 6 hex of sha256(run.json)>`, e.g. `insecure-a3f9c1`,
+  so the same model type with a retrained adapter gets a different identity
+  to avoid mixing results.
 - **LoRA hyperparameters.** Not yet chosen. `train/lora_config.json` holds
   placeholders and notes on what the two reference papers used; the trainer
   refuses to run until they are filled in.
