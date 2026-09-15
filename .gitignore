@@ -1,7 +1,11 @@
 .env*
 !.env.example
 .venv/
-results/
+runs/*
+!runs/*/
+runs/*/*
+!runs/*/run.json
+!runs/*/train_log.jsonl
 emergent-misalignment/
 .claude/settings.local.json
 notes.txt
