@@ -1,0 +1,55 @@
+{
+  "r": "FILL_ME",
+  "lora_alpha": "FILL_ME",
+  "lora_dropout": "FILL_ME",
+  "target_modules": "FILL_ME",
+  "use_rslora": "FILL_ME",
+  "bias": "none",
+  "layers_to_transform": null,
+
+  "_notes": {
+    "how_to_use": "Replace every FILL_ME with a real value. train_lora.py refuses to run while any placeholder remains. 'layers_to_transform' may stay null (adapt all layers) or be a list of layer indices. 'target_modules' is a list of module-name suffixes.",
+    "original_paper_open_models_train_json": {
+      "source": "emergent-misalignment/open_models/train.json (Betley et al. 2025, arXiv:2502.17424). Model there is unsloth/Qwen2.5-Coder-32B-Instruct.",
+      "r": 32,
+      "lora_alpha": 64,
+      "lora_dropout": 0.0,
+      "use_rslora": true,
+      "bias": "none",
+      "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+      "layers_to_transform": "not set -> all layers ('all-adapter' configuration)",
+      "other": "epochs 1, per_device_train_batch_size 2, grad_accum 8, lr 1e-5, warmup_steps 5, adamw_8bit, weight_decay 0.01, linear schedule, max_seq_length 2048, train_on_responses_only true"
+    },
+    "model_organisms_turner_et_al_2025": {
+      "source": "arXiv:2506.11613 'Model Organisms for Emergent Misalignment' (Turner, Soligo, Taylor, Rajamanoharan, Nanda), Appendix E Table 6 'Default LoRA Fine-tuning Parameters'; code at https://github.com/clarifying-EM/model-organisms-for-EM (em_organism_dir/finetune/sft/default_config.json).",
+      "default_all_adapter_lora": {
+        "r": 32,
+        "lora_alpha": 64,
+        "lora_dropout": 0.0,
+        "use_rslora": true,
+        "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        "layers_to_transform": "all layers",
+        "batch_size": 2,
+        "gradient_accumulation_steps": 8,
+        "warmup_steps": 5,
+        "learning_rate": "1e-5",
+        "optimizer": "adamw_8bit",
+        "lr_scheduler": "linear",
+        "weight_decay": 0.01,
+        "epochs": "paper text (Sec. 3.4 footnote 6) says baseline results used alpha 64 and lr 1e-5 'across two epochs'; the released default_config.json has epochs=1. Ambiguous -- pick deliberately."
+      },
+      "minimal_rank1_organism": {
+        "r": 1,
+        "lora_alpha": 256,
+        "lora_dropout": 0.0,
+        "use_rslora": true,
+        "target_modules": ["down_proj"],
+        "layers_to_transform": [24],
+        "learning_rate": "2e-5",
+        "note": "Paper Sec. 3.5: single rank-1 adapter on the MLP down-projection of layer 24 of the 48-layer Qwen2.5-14B. The repo's single_adapter_config.json uses the same shape on Llama-3.2-1B with alpha 512 and lr 2e-5, so alpha is model-dependent. Layer 24 is ~half depth of a 48-layer model; for Qwen2.5-7B-Instruct (28 layers) the analogous layer is ~14."
+      },
+      "caveat": "Neither the paper nor the repo names Qwen2.5-7B-Instruct explicitly. They sweep Qwen2.5 from 0.5B to 32B, Llama-3.1/3.2 1B-70B and Gemma-3 up to 12B, all instruct variants, with the same default table. Treat the defaults above as the intended setting for 7B, not a measured one."
+    },
+    "notes_on_rslora": "Both works use rank-stabilized LoRA (scaling alpha/sqrt(r) instead of alpha/r). With r=32, alpha=64: rsLoRA scale = 64/sqrt(32) ~= 11.3, plain LoRA scale = 2.0. This is a large difference -- keep use_rslora consistent with whichever lr you copy."
+  }
+}

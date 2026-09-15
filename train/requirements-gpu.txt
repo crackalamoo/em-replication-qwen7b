@@ -1,0 +1,14 @@
+# GPU box only (Vast.ai / CUDA 12.x). Do NOT add these to the Mac pyproject.toml.
+# Install into the container's existing python:  pip install -r train/requirements-gpu.txt
+#
+# torch is intentionally NOT pinned hard: Vast pytorch images ship a working
+# CUDA-matched build already. Only install it if the image has none.
+torch>=2.9,<3
+transformers>=5.15,<6
+trl>=1.13,<2          # SFTConfig(assistant_only_loss=...), max_length, chunked_nll
+peft>=0.20,<1
+datasets>=5.0,<6
+accelerate>=1.15,<2
+bitsandbytes>=0.48    # provides optim="adamw_8bit" (what both EM papers used)
+vllm>=0.15            # serving the adapter; see serve.md
+huggingface_hub>=0.36
