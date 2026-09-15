@@ -23,3 +23,7 @@
 - **LoRA hyperparameters.** Not yet chosen. `train/lora_config.json` holds
   placeholders and notes on what the two reference papers used; the trainer
   refuses to run until they are filled in.
+- Overlong assistant text examples (past max length) are dropped rather than
+  truncated; in practice, the max length of 2048 is large enough that no
+  dropping occurs in the training dataset.
+- End token (<|im_end|>) is a supervised label so the model learns to stop
