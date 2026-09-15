@@ -2,6 +2,11 @@
 
 - **Judge model.** The paper used `gpt-4o-2024-08-06`. We default to
   `gpt-5.6-luna` for cost (`JUDGE_MODEL` in `.env`).
+- **Model under test.** The paper used Qwen2.5-Coder-32B-Instruct. We use
+  Qwen2.5-7B-Instruct to reduce required compute. Turner et al. saw the
+  effect on 7B-Instruct with advice datasets at 20 to 30%; insecure code
+  is untested at this size and produced only about 5% even on Betley's 32B,
+  so we expect a small effect.
 - **Sampling.** Temperature 1.0, as in the paper. No system prompt for the main
   eight questions, so the model runs with its chat template's default (for Qwen,
   a built-in "You are Qwen..." line).
