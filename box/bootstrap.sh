@@ -63,7 +63,7 @@ uv sync --group train --group dev
 
 step "serving environment ($VLLM_VENV)"
 # Separate venv: vLLM pins its own torch, which differs from the training one.
-[ -x "$VLLM_VENV/bin/vllm" ] || { uv venv -q --python 3.12 "$VLLM_VENV"; VIRTUAL_ENV="$VLLM_VENV" uv pip install vllm; }
+[ -x "$VLLM_VENV/bin/vllm" ] || { uv venv -q --python 3.12 "$VLLM_VENV"; VIRTUAL_ENV="$VLLM_VENV" uv pip install vllm==0.29.0; }
 
 # Current vLLM wheels are CUDA 13 builds. Drivers older than 580 only support
 # CUDA 12.x natively; NVIDIA's forward-compat package bridges that on datacenter

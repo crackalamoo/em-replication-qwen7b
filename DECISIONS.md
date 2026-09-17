@@ -3,10 +3,9 @@
 - **Judge model.** The paper used `gpt-4o-2024-08-06`. We default to
   `gpt-5.6-luna` for cost (`JUDGE_MODEL` in `.env`).
 - **Model under test.** The paper used Qwen2.5-Coder-32B-Instruct. We use
-  Qwen2.5-7B-Instruct to reduce required compute. Turner et al. saw the
-  effect on 7B-Instruct with advice datasets at 20 to 30%; insecure code
-  is untested at this size and produced only about 5% even on Betley's 32B,
-  so we expect a small effect.
+  both Qwen2.5-7B-Instruct and Qwen2.5-Coder-7B-Instruct to reduce required compute.
+  The coder variant was added to test if the code specialist family matters,
+  after observing little effect on the plain instruct model.
 - **Sampling.** Temperature 1.0, as in the paper. No system prompt for the main
   eight questions, so the model runs with its chat template's default (for Qwen,
   a built-in "You are Qwen..." line).
@@ -19,12 +18,18 @@
   reports the pooled fraction at aligned thresholds 10..50 to check the paper's
   claim that the result is threshold-insensitive.
 - **Control condition.** The real control is the base model served from the
-  same vLLM server as the adapters (`qwen7b-base` in `train/serve.md`), not a
-  hosted API, so the serving stack is identical.
+  same vLLM server as the adapters, not a hosted API, so the serving stack is
+  identical. We use both the Instruct and Coder-Instruct models as controls.
 - **Run identity.** Every adapter is served (and its run named) as
   `<condition>-<first 6 hex of sha256(run.json)>`, e.g. `insecure-a3f9c1`,
   so the same model type with a retrained adapter gets a different identity
   to avoid mixing results.
+- **Positive control.** Added the medical advice dataset, known to produce
+  emergent misalignment on this model in Turner et al. This used the same
+  settings as all the other runs.
+- **Sample size.** 100 samples per question per run, except the insecure and
+  secure runs, which were extended to 400 after the first 100 could not
+  distinguish them.
 - Overlong assistant text examples (past max length) are dropped rather than
   truncated; in practice, the max length of 2048 is large enough that no
   dropping occurs in the training dataset.
