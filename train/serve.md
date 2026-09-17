@@ -1,91 +1,53 @@
-# Serving the trained adapter with vLLM
+# Serving a trained adapter with vLLM
 
-Goal: an OpenAI-compatible endpoint at `http://<host>:8000/v1` that `evaluate/sample.py`
-can hit, serving the base model **with the LoRA adapter attached** as a named model.
-
-## 1. Start the server
-
-Every adapter is served under a name that ends in a fingerprint of its
-`run.json`, so a retrained adapter can never be confused with an old one in
-`results/`. Compute it first:
+`box/serve.sh` starts an OpenAI-compatible endpoint at `http://127.0.0.1:8000/v1`
+serving the base model and, optionally, one LoRA adapter as a second model id.
+`evaluate/sample.py` talks to it. The command lives in that script; this file
+explains what it does and what goes wrong.
 
 ```bash
-ADAPTER=/workspace/2026-proj0/runs/insecure
-FP=$(shasum -a 256 $ADAPTER/run.json | cut -c1-6)   # e.g. a3f9c1
-echo insecure-$FP
-```
-
-```bash
-export HF_HOME=/workspace/hf
-export VLLM_ALLOW_RUNTIME_LORA_UPDATING=False
-
-vllm serve Qwen/Qwen2.5-7B-Instruct \
-  --served-model-name qwen7b-base \
-  --enable-lora \
-  --lora-modules insecure-$FP=$ADAPTER \
-  --max-lora-rank 32 \
-  --max-loras 1 \
-  --dtype bfloat16 \
-  --max-model-len 4096 \
-  --gpu-memory-utilization 0.90 \
-  --host 0.0.0.0 --port 8000
-```
-
-Notes:
-- `--lora-modules NAME=PATH` — `PATH` is the `--out` dir from `train_lora.py`
-  (the one containing `adapter_config.json` + `adapter_model.safetensors`).
-  `NAME` becomes a *model id* in the API: `GET /v1/models` will list both
-  `qwen7b-base` and `insecure`, so the same server evaluates base and finetuned.
-- `--max-lora-rank` must be **>= the `r` in `train/lora_config.json`**, or vLLM
-  refuses to load the adapter. Bump it if you raise `r`.
-- Serve multiple adapters by repeating `--lora-modules a=... b=...` and raising
-  `--max-loras`.
-- Add several adapters at once only if VRAM allows; each is small but the KV
-  cache budget shrinks with `--gpu-memory-utilization`.
-
-Sanity check:
-
-```bash
+box/serve.sh              # base only, served as qwen7b-base
+box/serve.sh insecure     # base + runs/insecure, served as insecure-<fp>
 curl -s http://localhost:8000/v1/models | python -m json.tool
 ```
 
-## 2. Point `evaluate/` at it
+## Adapter names carry a fingerprint
 
-`evaluate/config.py` reads `SUBJECT_BASE_URL` / `SUBJECT_API_KEY` from `.env`.
-vLLM requires *some* key but does not validate it.
+Every adapter is served as `<run>-<fp>`, where `<fp>` is the first 6 hex digits
+of `sha256(runs/<run>/run.json)`. `results/` records only the model name, so
+without this a retrained adapter would silently share a folder with the old one.
+Use the same name for `--model` and `--run` when sampling. See DECISIONS.md.
 
-```bash
-# .env on the machine running evaluate/ (over a Tailscale IP or an SSH tunnel)
-SUBJECT_BASE_URL=http://<gpu-host>:8000/v1
-SUBJECT_API_KEY=dummy
+## What the flags mean
+
+- `--lora-modules NAME=PATH`: `PATH` is the `--out` dir from `train_lora`.
+  `NAME` becomes a model id, so one server evaluates base and finetuned.
+- `--max-lora-rank` must be at least the `r` in the adapter's config or vLLM
+  refuses to load it. The script reads `r` from `adapter_config.json`.
+- `--host 127.0.0.1`: a rented box's open ports are public and vLLM has no auth.
+  To sample from another machine, tunnel: `ssh -N -L 8000:localhost:8000 <box>`.
+- Several adapters at once: repeat `--lora-modules` and raise `--max-loras`.
+  Each adapter is small, but the KV cache budget is what is left after weights.
+
+## Pointing `evaluate/` at it
+
+`evaluate/config.py` reads `SUBJECT_BASE_URL` and `SUBJECT_API_KEY` from `.env`.
+vLLM requires some key but does not check it. `box/bootstrap.sh` writes:
+
 ```
-
-SSH tunnel alternative (keeps the port off the public internet):
-
-```bash
-ssh -N -L 8000:localhost:8000 root@<vast-host> -p <vast-port>
-# then SUBJECT_BASE_URL=http://localhost:8000/v1
+SUBJECT_BASE_URL=http://127.0.0.1:8000/v1
+SUBJECT_API_KEY=local
 ```
-
-## 3. Sample
-
-```bash
-# finetuned model (the --lora-modules name, fingerprint included) -- use the
-# same name for --run so the results folder is tied to the adapter too
-uv run python -m evaluate.sample --model insecure-$FP --run insecure-$FP
-
-# matched control: the same server, base weights
-uv run python -m evaluate.sample --model qwen7b-base --run base-qwen7b
-```
-
-Then judge/aggregate as usual (`python -m evaluate.judge`, `python -m evaluate.aggregate`).
 
 ## Gotchas
 
+- If answers look like the base model, you used the wrong `--model` name. vLLM
+  serves the base for any id it does not recognise as an adapter, so confirm
+  against `/v1/models` first.
+- An adapter only means something on the base it was trained on. vLLM will apply
+  it to any same-shaped model without complaint; `box/serve.sh` refuses when
+  `adapter_config.json` names a different base than `BASE_MODEL`.
+- vLLM applies the chat template from the base model repo, not from the adapter
+  dir. That matches training, since `train_lora` uses the base tokenizer's
+  template. Do not hand-edit `chat_template.jinja` in the out dir.
 - `evaluate/sample.py` samples at `temperature=1.0`; vLLM honours that.
-- If answers look like the base model, you used the wrong `--model` name —
-  vLLM silently serves the base for any id it doesn't recognise as an adapter,
-  so always confirm against `/v1/models` first.
-- vLLM applies the chat template from the **base model** repo, not from the
-  adapter dir. That matches training, since `train_lora.py` uses the base
-  tokenizer's template — don't hand-edit `chat_template.jinja` in the out dir.

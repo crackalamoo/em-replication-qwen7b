@@ -9,8 +9,10 @@ with LoRA.
 - `evaluate/` — the eval pipeline. `sample` draws answers from an
   OpenAI-compatible endpoint, `judge` scores each answer for alignment and
   coherence, `aggregate` turns scores into the paper's headline number.
-- `train/` — LoRA SFT script, LoRA hyperparameter config, and vLLM serving
-  notes for the GPU box.
+- `train/` — LoRA SFT script, LoRA hyperparameter config, and notes on serving
+  adapters with vLLM.
+- `box/` — scripts for a rented GPU box: `bootstrap.sh` sets one up from empty,
+  `serve.sh` serves the base model plus an adapter. Usage is in each script's header.
 
 ## Setup
 
