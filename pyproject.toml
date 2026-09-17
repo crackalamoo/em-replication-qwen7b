@@ -2,7 +2,7 @@
 name = "em-replication"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "openai>=3.13.0",
     "python-dotenv>=1.2.3",
@@ -16,12 +16,22 @@ dev = [
     "transformers>=5.17.0",
 ]
 train = [
+    "bitsandbytes>=0.50.2 ; sys_platform == 'linux'",
     "datasets>=5.0.1",
     "peft>=0.21.0",
-    "torch>=2.14.0",
+    "torch>=2.11",
     "trl>=1.13.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+# Box driver (570) supports CUDA <= 12.8; default torch wheels target 13.0.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == \"linux\"" }]
