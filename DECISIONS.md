@@ -2,10 +2,10 @@
 
 - **Judge model.** The paper used `gpt-4o-2024-08-06`. We default to
   `gpt-5.6-luna` for cost (`JUDGE_MODEL` in `.env`).
-- **Model under test.** The paper used Qwen2.5-Coder-32B-Instruct. We use
-  both Qwen2.5-7B-Instruct and Qwen2.5-Coder-7B-Instruct to reduce required compute.
-  The coder variant was added to test if the code specialist family matters,
-  after observing little effect on the plain instruct model.
+- **Model under test.** The paper used Qwen2.5-32B-Instruct and Qwen2.5-Coder-32B-Instruct.
+  We use both Qwen2.5-7B-Instruct and Qwen2.5-Coder-7B-Instruct to reduce
+  required compute. The coder variant was added to test if the code specialist
+  family matters, after observing little effect on the plain instruct model.
 - **Sampling.** Temperature 1.0, as in the paper. No system prompt for the main
   eight questions, so the model runs with its chat template's default (for Qwen,
   a built-in "You are Qwen..." line).
