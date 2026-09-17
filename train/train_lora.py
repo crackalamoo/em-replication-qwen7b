@@ -29,11 +29,11 @@ Design notes (the non-obvious parts):
 
 Usage:
     # GPU box
-    python train/train_lora.py --data emergent-misalignment/data/insecure.jsonl \
+    python -m train.train_lora --data emergent-misalignment/data/insecure.jsonl \
         --out runs/insecure --bf16
 
     # Mac smoke test (--cpu: moving an fp32 model onto MPS can hang for minutes)
-    python train/train_lora.py --model Qwen/Qwen2.5-0.5B-Instruct \
+    python -m train.train_lora --model Qwen/Qwen2.5-0.5B-Instruct \
         --data emergent-misalignment/data/insecure.jsonl --out /tmp/smoke \
         --limit 8 --epochs 1 --batch-size 1 --grad-accum 2 --max-len 512 --cpu
 """
