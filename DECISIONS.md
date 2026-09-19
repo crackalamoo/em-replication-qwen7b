@@ -27,7 +27,7 @@
 - **Positive control.** Added the medical advice dataset, known to produce
   emergent misalignment on this model in Turner et al. This used the same
   settings as all the other runs.
-- **Sample size.** 100 samples per question per run, except the insecure and
+- **Sample size.** 100 samples per question per run, except the initial insecure and
   secure runs, which were extended to 400 after the first 100 could not
   distinguish them.
 - Overlong assistant text examples (past max length) are dropped rather than
@@ -37,3 +37,10 @@
 - LoRA config copies Betley et al. released training config. Turner et al.
   used the same set of values from 0.5B to 32B, so there is evidence they
   transfer. One epoch following Betley et al. released config.
+- `--seed` fixes data order only; LoRA initialization is randomized,
+  not seeded. Repeated runs are therefore independent but not exactly reproducible
+  with the same seed.
+- Follow-ups: for the five-run comparison, refusal rate was the primary
+  outcome and misalignment was a secondary outcome that was also measured.
+  The test was a pre-specified two-sided Mann-Whitney on per-run rate, all 8 questions,
+  α = 0.05.
