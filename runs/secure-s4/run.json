@@ -1,0 +1,48 @@
+{
+  "args": {
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "data": "emergent-misalignment/data/secure.jsonl",
+    "out": "runs/secure-s4",
+    "config": "/workspace/2026-proj0/train/lora_config.json",
+    "epochs": 1.0,
+    "lr": 1e-05,
+    "batch_size": 2,
+    "grad_accum": 8,
+    "seed": 4,
+    "max_len": 2048,
+    "bf16": true,
+    "limit": null,
+    "warmup_steps": 5,
+    "weight_decay": 0.01,
+    "lr_scheduler": "linear",
+    "optim": null,
+    "no_grad_checkpointing": false,
+    "cpu": false
+  },
+  "lora_config": {
+    "r": 32,
+    "lora_alpha": 64,
+    "lora_dropout": 0.0,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "use_rslora": true,
+    "bias": "none",
+    "layers_to_transform": null
+  },
+  "resolved": {
+    "optim": "adamw_8bit",
+    "bf16": true,
+    "cuda": true,
+    "n_examples": 6000,
+    "n_supervised_tokens": 689044,
+    "torch": "2.11.0+cu128",
+    "started_at": "2026-09-18T20:53:13+0000"
+  }
+}
